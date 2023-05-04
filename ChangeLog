@@ -1,0 +1,13 @@
+Thu May  4 17:41:43 2023  Rob Lauer  <rlauer6@comcast.net>
+
+	[first working version]:
+	* ChangeLog: new
+	* config.js: new
+	* instructions.txt: new
+	* qrcode.cgi: new
+	* README.md: new
+	* totp.js: new
+	* totp.json: new
+	* Authen/TOTP/QRCode.pm: new
+	* Authen/TOTP/WebApp.pm: new
+	* TBD.md: new
