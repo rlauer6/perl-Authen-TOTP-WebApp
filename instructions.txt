@@ -1,0 +1,2 @@
+Scan the QR code on the screen or enter the secret key in your
+authentication app. Record the key in a safe place.

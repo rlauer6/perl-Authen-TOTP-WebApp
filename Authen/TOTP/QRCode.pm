@@ -1,4 +1,4 @@
-package Authen::TOTP::WebApp;
+package Authen::TOTP::QRCode;
 
 use strict;
 use warnings;
@@ -10,8 +10,13 @@ use MIME::Base64 qw(encode_base64);
 
 use Readonly;
 
+# booleans
+
 Readonly our $TRUE  => 1;
 Readonly our $FALSE => 0;
+
+# chars
+Readonly our $EMPTY => q{};
 
 Readonly our $OTPAUTH_URI => 'otpauth://totp/%s:%s?secret=%s&issuer=%s';
 
@@ -19,9 +24,9 @@ Readonly our $DEFAULT_QRCODE_SIZE    => 8;
 Readonly our $DEFAULT_QRCODE_MARGIN  => 1;
 Readonly our $DEFAULT_QRCODE_VERSION => 0;
 Readonly our $DEFAULT_QRCODE_LEVEL   => 1;
-Readonly our $IMAGE_ELEMENT => '<img src="data:image/png;base64, %s">';
+Readonly our $IMAGE_TAG => '<img src="data:image/png;base64, %s">';
 
-use parent qw(Class::Accessor::Fast);
+use parent qw(Exporter Class::Accessor::Fast);
 
 __PACKAGE__->follow_best_practice;
 __PACKAGE__->mk_accessors(
@@ -57,12 +62,12 @@ sub gen_qrcode {
 ########################################################################
   my ( $self, $filename ) = @_;
 
-  my $username = uri_encode( $self->get_username // q{} );
+  my $username = uri_encode( $self->get_username // $EMPTY );
 
   die 'no username'
     if !$username;
 
-  my $image = q{};
+  my $image = $EMPTY;
 
   my $fh = IO::Scalar->new( \$image );
 
@@ -108,26 +113,6 @@ sub gen_qrcode {
 }
 
 ########################################################################
-sub gen_secret {
-########################################################################
-  my ($self) = @_;
-
-  my @chars = ( 'A' .. 'Z', '2' .. '7' );
-
-  my $length = scalar @chars;
-
-  my $secret = q{};
-
-  for ( 0 .. 15 ) {
-    $secret .= $chars[ rand $length ];
-  }
-
-  $self->set_secret($secret);
-
-  return $secret;
-}
-
-########################################################################
 sub show_qrcode {
 ########################################################################
   my ($self) = @_;
@@ -146,8 +131,12 @@ sub show_qrcode {
   return;
 }
 
+sub as_string { return $_[0]->get_image; }
+sub as_mime   { return $_[0]->get_base64; }
+sub as_tag    { return sprintf $IMAGE_TAG, $_[0]->as_mime; }
+
 ########################################################################
-sub get_img_base64 {
+sub get_base64 {
 ########################################################################
   my ($self) = @_;
 
@@ -156,18 +145,18 @@ sub get_img_base64 {
   die 'no image'
     if !$image;
 
-  return sprintf $IMAGE_ELEMENT, encode_base64($image);
+  return encode_base64($image);
 }
 
 ########################################################################
 sub main {
 ########################################################################
-  my $qrcode = USGN::TOTP::QRCode->new( username => 'rlauer@usgn.net' );
+  my $qrcode = Authen::TOTP::QRCode->new( username => 'rlauer@usgn.net' );
 
   $qrcode->gen_qrcode('qrcode.png');
 
   printf "secret: %s\n",    $qrcode->get_secret;
-  printf "image tag: %s\n", $qrcode->get_img_base64;
+  printf "image tag: %s\n", $qrcode->as_tag;
 
   exit;
 }
