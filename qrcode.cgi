@@ -9,7 +9,8 @@ use CGI::Minimal;
 
 use Readonly;
 
-Readonly our $EMPTY => q{};
+Readonly our $EMPTY   => q{};
+Readonly our $SUCCESS => 0;  # shell success
 
 ########################################################################
 sub main {
@@ -56,7 +57,7 @@ sub verify_access_code {
 
   print JSON->new->pretty->encode( { matched => $app->get_verified } );
 
-  return;
+  return $SUCCESS;
 }
 
 ########################################################################
@@ -79,7 +80,7 @@ sub create_qrcode_secret {
   print "Content-type: application/json\n\n";
   print JSON->new->pretty->encode($payload);
 
-  return;
+  return $SUCCESS;
 }
 
 ########################################################################
@@ -91,7 +92,7 @@ sub render_form {
 
   print $app->render_qrcode_form( login_page => $cgi->param('login') );
 
-  return;
+  return $SUCCESS;
 }
 
 exit main();

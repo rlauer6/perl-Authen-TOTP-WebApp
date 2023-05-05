@@ -1,0 +1,5 @@
+docker/docker.log
+docker/install.pl
+**/*.tar.gz
+docker/requirements.txt
+docker/volume

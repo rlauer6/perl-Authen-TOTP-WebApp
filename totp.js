@@ -69,17 +69,19 @@ $(function() {
   $('#login-btn').on("click", function(e) {
 
     e.preventDefault();
-    
-    var access_code = encodeURI($('#access_code').val());
-    var username = encodeURI($('#username').val());
-    
+
     if ( access_code != "" && username != "" ) {
       $('#login-btn').attr('disabled', true);
       
-      url = '/cgi-bin/qrcode.cgi?access_code=' + access_code + '&username=' + username;
+      data = {
+        "username" : $('#username').val(),
+        "access_code" : $('#access_code').val()
+      };
       
       $.ajax({
-        url : url,
+        url : '/cgi-bin/qrcode.cgi',
+        method: 'POST',
+        data: data,
         success: function(data) {
           console.log(data);
 

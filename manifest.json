@@ -1,0 +1,22 @@
+{
+  "files" : {
+    "/var/www/html/javascript" : [
+      "totp.js"
+    ],
+    "/var/www/cgi-bin" : [
+      {
+      "qrcode.cgi" : [ "0755", "apache", "apache"]
+    }
+    ],
+    "/var/www/config" : [
+      { "totp.json" : [ "0400", "apache", "apache"] }
+    ],
+    "/var/www/include" : [
+      "instructions.txt"
+    ],
+    "/usr/local/share/perl5" : [
+      "Authen/TOTP/WebApp.pm",
+      "Authen/TOTP/QRCode.pm"
+    ]
+  }
+}

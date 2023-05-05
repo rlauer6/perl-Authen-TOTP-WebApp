@@ -85,7 +85,7 @@ sub gen_qrcode {
 
   my $key = $self->get_secret // $self->gen_secret;
 
-  my $issuer = $self->get_issuer // 'USGN';
+  my $issuer = $self->get_issuer // 'UNKNOWN';
 
   my $qrcode_str = sprintf $OTPAUTH_URI, $issuer, $username, $key, $issuer;
 

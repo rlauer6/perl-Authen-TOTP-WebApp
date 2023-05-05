@@ -1,6 +1,7 @@
 {
   "app" : {
-    "title": "",
+    "issuer" : "BIGFOOT",
+    "title": "2FA Proof of Concept",
     "javascript": {
       "src" : "/javascript/totp.js"
     },

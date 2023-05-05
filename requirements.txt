@@ -1,0 +1,13 @@
+Archive::Tar
+IO::Zlib
+Authen::OATH 2.0.1
+Cache::FileCache 
+CGI::Minimal 1.30
+Class::Accessor::Fast 0.51
+Convert::Base32 0.06
+Imager::QRCode 0.035
+IO::Scalar 2.111
+JSON 4.07
+Readonly 2.05
+Template 3.100
+URI::Encode 1.1.1

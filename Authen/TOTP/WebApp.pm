@@ -6,7 +6,6 @@ use warnings;
 use lib '.';
 
 use Authen::OATH;
-use Cache::FileCache;
 use Cwd;
 use Convert::Base32 qw(decode_base32);
 use Data::Dumper;
@@ -27,7 +26,6 @@ __PACKAGE__->mk_accessors(
   qw(
     access_code
     appname
-    cache
     config
     config_path
     include_path
@@ -50,18 +48,16 @@ sub new {
   my %options = ref $args[0] ? %{ $args[0] } : @args;
 
   $options{config_path}  //= $ENV{CONFIG_PATH} // cwd;
-  $options{appname}      //= 'webapp';
+  $options{appname}      //= 'authen-totp-webapp';
   $options{include_path} //= cwd;
 
   my $self = $class->SUPER::new( \%options );
 
   $self->fetch_config();
 
-  my $cache = Cache::FileCache->new( { namespace => $self->get_appname } );
+  $self->set_issuer( $self->get_config->{app}->{issuer} );
 
-  print {*STDERR} Dumper( [ time => scalar time, cache => $cache ] );
-
-  $self->set_cache($cache);
+  $self->init_secret_repo();
 
   if ( $self->get_username && $self->get_access_code ) {
     $self->set_verified( $self->verify_totp() );
@@ -71,21 +67,17 @@ sub new {
 }
 
 ########################################################################
-sub fetch_config {
+sub init_secret_repo {
 ########################################################################
   my ($self) = @_;
 
-  my $config_file = sprintf '%s/%s.json', $self->get_config_path,
-    $self->get_appname;
+  require Cache::FileCache;
 
-  open my $fh, '<', $config_file
-    or die 'could not open ' . $config_file . ' for reading.';
+  my $cache = Cache::FileCache->new( { namespace => $self->get_appname } );
 
-  local $RS = undef;
+  $self->mk_accessors('cache');
 
-  $self->set_config( decode_json(<$fh>) );
-
-  close $fh;
+  $self->set_cache($cache);
 
   return $self;
 }
@@ -108,6 +100,26 @@ sub save_secret {
   my ( $self, $key, $secret ) = @_;
 
   return $self->get_cache->set( $key, $secret );
+}
+
+########################################################################
+sub fetch_config {
+########################################################################
+  my ($self) = @_;
+
+  my $config_file = sprintf '%s/%s.json', $self->get_config_path,
+    $self->get_appname;
+
+  open my $fh, '<', $config_file
+    or die 'could not open ' . $config_file . ' for reading.';
+
+  local $RS = undef;
+
+  $self->set_config( decode_json(<$fh>) );
+
+  close $fh;
+
+  return $self;
 }
 
 ########################################################################
@@ -165,12 +177,6 @@ sub render_template {
 
   my $output = $EMPTY;
 
-  print {*STDERR} Dumper(
-    [ template   => $template,
-      parameters => $parameters
-    ]
-  );
-
   if ( !$tt->process( \$template, $parameters, \$output ) ) {
     die $tt->error;
   }
@@ -205,8 +211,6 @@ sub render_qrcode_form {
 
   my %parameters = ( %options, %{ $self->get_config } );
 
-  print {*STDERR} Dumper( [ parameters => \%parameters ] );
-
   return $self->render_template( $template, \%parameters );
 }
 
@@ -227,7 +231,7 @@ __DATA__
 <html>
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>[% title %]</title>
+    <title>[% app.title %]</title>
     <link rel="stylesheet" href="[% bootstrap.stylesheet.src %]" type="text/css" />
     [% IF app.stylesheet.src %]
     <link rel="stylesheet" href="[% app.stylesheet.src %]" type="text/css" />

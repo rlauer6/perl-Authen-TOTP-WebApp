@@ -1,3 +1,33 @@
+Fri May  5 09:18:38 2023  Rob Lauer  <rlauer6@comcast.net>
+
+	[dockerized]:
+	* docker/Dockerfile: new
+	* docker/Makefile: new
+	* docker/docker-compose.yaml: new
+	* docker/httpd.conf: new
+	* docker/totp.conf: new
+	* install.pl: new
+	* manifest.json: new
+	* requirements.txt: new
+	* .gitignore: new
+	* config.js: removed
+	* Authen/TOTP/QRCode.pm
+	(gen_qrcode): default issuer to UNKNOWN
+	* Authen/TOTP/WebApp.pm
+	- remove debug statements
+	- remove cache from initial accessor list
+	(new)
+	- default appname to authen-totp-webapp
+	- remove cache setting from new
+	- call init_secret_repo()
+	(init_secret_repo): new
+	(__DATA__): fix title
+	* qrcode.cgi
+	- make sure all subs return a value
+	* totp.json: fix title, issuer
+	* totp.js: POST for login so access code not in logs
+	* TBD: mark off dockerization, Perl dependencies
+
 Thu May  4 17:41:43 2023  Rob Lauer  <rlauer6@comcast.net>
 
 	[first working version]:
@@ -11,3 +41,4 @@ Thu May  4 17:41:43 2023  Rob Lauer  <rlauer6@comcast.net>
 	* Authen/TOTP/QRCode.pm: new
 	* Authen/TOTP/WebApp.pm: new
 	* TBD.md: new
+
