@@ -14,9 +14,15 @@ allow you test your access code
 
 <img src="authen-totp-webapp-1.png" style="display: inline-block; max-width:250px; margin: 0 auto;">
 
+---
+
 <img src="authen-totp-webapp-2.png" style="display: inline-block; max-width:250px; margin: 0 auto;">
 
+---
+
 <img src="authen-totp-webapp-3.png" style="display: inline-block; max-width:250px; margin: 0 auto;">
+
+---
 
 # Other Features
 
