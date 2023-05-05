@@ -17,7 +17,7 @@ allow you test your access code
 The Perl module behind the scenes `Authen::TOTP::WebApp` is designed
 to be sub-classed so you can easily modify the behaviors to provide
 your own forms and your own key storage mechanism.  See the
-documentation for [`Authen::TOTP::WebApp`](Authen/TOTP/WebApp.pod) for more details.
+documentation for [`Authen::TOTP::WebApp`](/Authen/TOTP/WebApp.pod) for more details.
 
 # Dependencies
 
