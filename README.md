@@ -7,18 +7,23 @@ a secret key for use with two factor authentication.
 
 * Enter your username, click "Submit" and a QR code and secret will
  appear.
+
 * The application will store your secret locally on the web server and
 allow you test your access code
-* Enter the secret or scan the QR code to your 2FA authentication app
-(e.g. Google Authenticator)
 
 <img src="authen-totp-webapp-1.png" style="display: inline-block; max-width:250px; margin: 0 auto;">
 
 ---
 
+
+* Enter the secret or scan the QR code to your 2FA authentication app
+(e.g. Google Authenticator)
+
 <img src="authen-totp-webapp-2.png" style="display: inline-block; max-width:250px; margin: 0 auto;">
 
 ---
+
+* Enter the access code from your app and see if it matches!
 
 <img src="authen-totp-webapp-3.png" style="display: inline-block; max-width:250px; margin: 0 auto;">
 
