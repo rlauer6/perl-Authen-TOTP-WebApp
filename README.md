@@ -5,27 +5,24 @@ project creates a Bootstrap web application running in Docker
 container that allows you to create
 a secret key for use with two factor authentication.
 
-* Enter your username, click "Submit" and a QR code and secret will
- appear.
-
-* The application will store your secret locally on the web server and
-allow you test your access code
-
 <img src="authen-totp-webapp-1.png" style="display: inline-block; max-width:250px; margin: 0 auto;">
 
+* Enter your username, click "Submit".
+
 ---
-
-
-* Enter the secret or scan the QR code to your 2FA authentication app
-(e.g. Google Authenticator)
 
 <img src="authen-totp-webapp-2.png" style="display: inline-block; max-width:250px; margin: 0 auto;">
 
+* A QR code and secret will be retrieved from the API.
+* The application will store your secret locally.
+* Enter the secret or scan the QR code to your 2FA authentication app
+(e.g. Google Authenticator)
+
 ---
 
-* Enter the access code from your app and see if it matches!
-
 <img src="authen-totp-webapp-3.png" style="display: inline-block; max-width:250px; margin: 0 auto;">
+
+* Enter the access code from your app and see if it matches!
 
 ---
 
