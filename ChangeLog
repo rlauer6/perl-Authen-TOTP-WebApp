@@ -1,3 +1,18 @@
+Fri May  5 14:31:40 2023  Rob Lauer  <rlauer6@comcast.net>
+
+	[documentation]:
+	* toptp.js: use new API endpoints
+	* qrcode.cgi: no need for a secret parameter
+	* docker/totp.conf: rewrite rule for API endpoints
+	* Authen/TOTP/WebApp.pm
+	(_fetch_config): renamed from fetch_config
+	(verify_totp): accept username, access_code as arguments
+	(_fetch_template)
+	- renamed from fetch_template
+	- accept filename or undef
+	(__DATA__): no need to set action in form
+	(pod): first version of docs
+
 Fri May  5 09:18:38 2023  Rob Lauer  <rlauer6@comcast.net>
 
 	[dockerized]:

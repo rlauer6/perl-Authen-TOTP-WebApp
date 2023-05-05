@@ -24,7 +24,7 @@ $(function() {
       $('#submit-btn').attr('disabled', true);
       $('#submit-btn-container').hide();
       
-      url = '/cgi-bin/qrcode.cgi?username=' + username;
+      url = '/qrcode/' + username;
       
       $.ajax({
         url : url,
@@ -79,7 +79,7 @@ $(function() {
       };
       
       $.ajax({
-        url : '/cgi-bin/qrcode.cgi',
+        url : '/verify',
         method: 'POST',
         data: data,
         success: function(data) {

@@ -17,7 +17,6 @@ sub main {
 ########################################################################
   my $cgi = CGI::Minimal->new;
 
-  my $secret      = $cgi->param('secret');
   my $username    = $cgi->param('username');
   my $access_code = $cgi->param('access_code');
 
@@ -25,7 +24,6 @@ sub main {
     config_path  => '/var/www/config',
     include_path => '/var/www/include',
     appname      => 'totp',
-    secret       => $secret,
     username     => $username,
     access_code  => $access_code,
   );
@@ -41,7 +39,7 @@ sub main {
   if ( $username && !$access_code ) {
     $action = 'create';
   }
-  elsif ( $access_code && ( $username || $secret ) ) {
+  elsif ( $access_code && $username ) {
     $action = 'verify';
   }
 

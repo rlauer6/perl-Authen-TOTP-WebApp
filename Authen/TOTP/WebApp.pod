@@ -1,0 +1,268 @@
+
+## no critic (RequirePodSections)
+
+__END__
+
+=pod
+
+=head1 NAME
+
+Authen::TOTP::WebApp - Method to support two-factor authentication
+
+=head1 SYNOPSIS
+
+  my $cgi = CGI::Minimal->new;
+
+  my $username    = $cgi->param('username');
+  my $access_code = $cgi->param('access_code');
+
+  my $app = Authen::TOTP::WebApp->new(
+    config_path  => '/var/www/config',
+    include_path => '/var/www/include',
+    appname      => 'totp',
+    username     => $username,
+    access_code  => $access_code,
+  );
+
+  my $action = 'render';
+
+  my %dispatch_table = (
+    render => \&render_form,
+    create => \&create_qrcode_secret,
+    verify => \&verify_access_code,
+  );
+
+  if ( $username && !$access_code ) {
+    $action = 'create';
+  }
+  elsif ( $access_code && $username ) {
+    $action = 'verify';
+  }
+
+  return $dispatch_table{$action}->( $app, $cgi );
+
+=head1 DESCRIPTION
+
+C<Authen::TOTP::WebApp> provides the scaffolding for supporting
+two-factor authentication for your web applications. This class will:
+
+=over 5
+
+=item * create a secret that can be used with L<Authen::OATH> to return a time-base one-time password (TOTP)
+
+=item * create a QR code image of that can be scanned using mobil apps
+
+=item * store and retrieve keys
+
+=item * returning an HTML form for creating a secret
+
+=back
+
+The module can be used as part of a web application or stand-alone.
+
+=head1 CONFIGURATION FILE
+
+The configuration file included with the project is specific to the
+Bootstrap implementation of the key creation and verification
+forms. You can more or less put anything you want in this file.  The
+CGI will look for F<totp.json> in the path pointed to by the
+environment variable C<CONFIG_PATH>.
+
+The only section required by the application is the C<app> section and
+the only value really required is C<issue>. If that is not found, then
+the issuer will be set "UNKNOWN".
+
+If you are building your own forms, create your own version of
+F<totp.json> to suit your needs.
+
+
+ {
+   "app" : {
+     "issuer" : "BIGFOOT",
+     "title": "2FA Proof of Concept",
+     "javascript": {
+       "src" : "/javascript/totp.js"
+     },
+     "stylesheet" : {
+       "src" : ""
+     },
+     "form" : {
+       "qrcode" : {
+         "id" : "qrcode-form"
+       }
+     },
+     "instructions" : "instructions.txt"
+   },
+   "jquery" : {
+     "javascript" : {
+       "src" : "https://code.jquery.com/jquery-3.6.3.min.js",
+       "integrity" : "sha256-pvPw+upLPUjgMXY0G+8O0xUf+/Im1MZjXxxgOcBQBXU=",
+       "crossorigin" : "anonymous"
+     }
+   },
+   "bootstrap" : {
+     "stylesheet" : {
+       "src" : "https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css"},
+     "javascript" : {
+       "src" : "https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"
+     }
+   }
+ }
+
+=head1 METHODS AND SUBROUTINES
+
+=head2 new
+
+Instantiates a new C<Authen::TOTP::WebApp> instance.
+
+ new(options)
+
+=over 5
+
+=item  config_path
+
+The path to the F<totp.json> configuration file.
+
+default: $ENV{CONFIG_PATH}, cwd
+
+=item  include_path
+
+Path where C<Template> can find files that are included using the C<[% INCLUDE %]> tag.
+
+=item  appname
+
+Application name.  Used by the reference implementation to define a namespace for the file cache. You can use this for anything.
+
+default: authen-totp-webapp
+
+=item  username
+
+An identifer to be paired with the secret...typically a username. This
+can be passed into the constructor or set using the setter
+(C<set_username>).
+
+=item  access_code
+
+The access code to verify. This can be passed in the constructor or
+set using the setter (C<set_access_code>).
+
+=back
+
+=head2 find_secret
+
+ find_secret([username])
+
+If C<username> is not passed, the method will try C<get_username>.
+
+See L</OVERRIDABLE METHODS>
+
+=head2 gen_secret
+
+Returns a 32 character string composed of the letters A-Z, 2-7.
+
+See L</OVERRIDABLE METHODS>
+
+=head2 init_secret_repo
+
+See L</OVERRIDABLE METHODS>
+
+=head2 render_qrcode_form
+
+Returns an HTML form that implements a simple web application that can
+be used to generate a secret key and QR code.
+
+The reference implementation uses a form that is embedded in the CGI,
+however you can provide your own form template as well.
+
+You can leverage the scaffolding here by providind your own form. Add a
+C<template> value in the C<app> section that points to a
+L<Template::Toolkit> template that will be passed the configuration
+object when the template is rendered.
+
+=head2 save_secret
+
+See L</OVERRIDABLE METHODS>
+
+=head2 verify_totp
+
+ verify_totp([username, access_code])
+
+Compares the access code provide against a TOTP value generated using
+that user's secret.  Return a true value if the user's secret is found
+and the access code matches.
+
+The access code to match is calculated using L<Authen::OATH>.
+
+  return $access_code eq $oath->totp( decode_base32($secret) );
+
+=head1 OVERRIDABLE METHODS
+
+The reference implementation that runs in the Docker container uses
+C<Cache::FileCache> to store secrets locally. In a production
+environment, you'll want to use your own secrets repository.
+
+=over 5
+
+=item C<init_secret_repo>
+
+This method will be called when class is instantiated. You should do
+what you need to do in order to use your repository.
+
+=item C<save_secret>
+
+This method will be called if you are using F<qrcode.cgi> as an API
+and generating a secret. It is passed the C<username> and the C<secret>.
+
+=item C<find_secret>
+
+This method will be called when you call C<verify_totp> to verify as
+access code. You should return the secret or undef if the username is found
+
+=item C<gen_secret>
+
+The reference implementation uses a simple algorithm to create a 32
+character key composed of the letters A-Z and the numbers 2-7. You can
+replace this method to return your own version of a secret. You may
+want to check your a secret before issuing to make sure it is unique.
+
+=back
+
+=head1 METHODS INHERITED FROM L<Authen::TOTP::QRCode>
+
+=head2 as_mime
+
+Returns a base64 mime encoded version of the image.
+
+=head2 as_string
+
+Returns the image as a string (scalar).
+
+=head2 as_tag
+
+Returns an HTML image tag with the embedded base64 version of the QR
+code.
+
+=head2 gen_qrcode
+
+ gen_qrcode([filename])
+
+Generates the QR code image and optionally saves to a file. You can
+retrieve the image in one of several ways.
+
+ $app->gen_qrcode();
+
+ my $image = $app->as_string(); # same as $app->get_image();
+
+ my $b64_image = $app->as_mime;
+
+ my $img_tag = $app->as_tag;
+
+=head1 SEE ALSO
+
+L<Authen::OATH>, L<Imager::QRCode>, L<Authen::TOTP::QRCode>
+
+=head1 AUTHOR
+
+Rob Lauer - <rclauer@gmail.com>
+
+=cut
