@@ -16,7 +16,9 @@
     ],
     "/usr/local/share/perl5" : [
       "Authen/TOTP/WebApp.pm",
-      "Authen/TOTP/QRCode.pm"
+      "Authen/TOTP/QRCode.pm",
+      "Authen/TOTP/SecretsManager/FileCache.pm",
+      "Authen/TOTP/SecretsManager/AWSSecretsManager.pm"
     ]
   }
 }

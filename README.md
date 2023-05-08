@@ -1,5 +1,8 @@
 # perl-Authen-TOTP-WebApp
 
+> Caution: This is a _work-in-progress_, classes and methods may
+> be subject to change!
+
 Proof of concept for creating an extensible TOTP 2FA web app. This
 project creates a Bootstrap web application running in Docker
 container that allows you to create
@@ -29,9 +32,27 @@ a secret key for use with two factor authentication.
 # Other Features
 
 The Perl module behind the scenes `Authen::TOTP::WebApp` is designed
-to be sub-classed so you can easily modify the behaviors to provide
-your own forms and your own key storage mechanism.  See the
+so you can sub-class or compose in methods to modify the behaviors for
+providing your own forms and your own key storage mechanism.  See the
 documentation for [`Authen::TOTP::WebApp`](/Authen/TOTP/WebApp.pod) for more details.
+
+The reference implementation uses `Cache::FileCache` to store secrets
+on the local Docker container, so you will lose these each time you
+bring up the container.
+
+You can also see how an example of using AWS
+Secrets Manager as your backend secret repository. The
+`docker-compose.yaml` file will also bring up LocalStack which is used
+t emulate AWS Secrets Manager.  To exercise the AWS Secrets Manager
+version, update the `secrets_manager` entry in the `totp.json`.
+
+```
+ "secrets_manager" : "AWSSecretsManager"
+```
+
+The secret repository is not persistent. When LocalStack is taken
+down you will lose any secrets you have stored. __This is a POC
+afterall...__
 
 # Dependencies
 
@@ -51,6 +72,7 @@ __...and possibly more__
 * `CGI::Minimal`
 * `Class::Accessor::Fast`
 * `Convert::Base32`
+* `Data::UUID`
 * `Imager::QRCode`
 * `IO::Scalar`
 * `JSON`
@@ -70,28 +92,29 @@ this working by creating a Docker container and running
 The CGI will deliver a form to your browser where you can enter a
 username. A secret key and a QR code will be returned.
 
-The form is actually created by Perl CGI, however you can deliver your
+The form is actually created by a Perl CGI, however you can deliver your
 own form and use the Perl CGI's API methods instead.
 
 ## Endpoints
 
-Endpoints all point to `qrcode.cgi`.
+Apache configuration to create convenient endpoints (all endpoints point to `qrcode.cgi`).
 
 ```
 RewriteRule ^/2fa              /cgi-bin/qrcode.cgi  [PT]
 RewriteRule ^/qrcode/([^/]+)$  /cgi-bin/qrcode.cgi?username=$1 [PT]
 RewriteRule ^/login            /cgi-bin/qrcode.cgi?login=1 [PT]
 RewriteRule ^/verify$          /cgi-bin/qrcode.cgi?username=$1&access_code=$2 [PT]
-```
 
 AllowEncodedSlashes On
+```
+
 
 | Endpoint | Description | Method | Parameters | 
 | -------- | ----------- | ------ | ---------- | 
 | /qrcode/{username} | returns a JSON payload with a base64 encoded QR code | GET | username |
 | /2fa  | returns an HTML form for creating a secret and QR code | GET |
 | /verify | returns a JSON payload with "matched" - a boolean that indicates if the access code is valid | POST | username, access_code |
-| /login | returns an HTML for entering username and access code | GET | |
+| /login | returns an HTML form for entering username and access code | GET | |
 
 # Building the Docker Container
 

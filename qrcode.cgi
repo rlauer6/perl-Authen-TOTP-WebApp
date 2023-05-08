@@ -86,9 +86,11 @@ sub render_form {
 ########################################################################
   my ( $app, $cgi ) = @_;
 
+  my $login = $cgi->param('login') || $EMPTY;
+
   print "Content-Type: text/html\n\n";
 
-  print $app->render_qrcode_form( login_page => $cgi->param('login') );
+  print $app->render_qrcode_form( login_page => $login );
 
   return $SUCCESS;
 }

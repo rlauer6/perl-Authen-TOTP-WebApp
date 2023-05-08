@@ -1,3 +1,29 @@
+Mon May  8 16:43:03 2023  Rob Lauer  <rlauer6@comcast.net>
+
+	[secrets manager]:
+	* Authen/TOTP/SecretsManager/AWSSecretsManager.pm: new
+	* Authen/TOTP/SecretsManager/FileCache.pm: new
+	* manifest.json: add above to manifest
+	* totp.json
+	- added an 'aws' secion and 'secrets_manager' variable
+	* requirements.txt
+	- + Data::UUID
+	* qrcode.cgi: call param in scalar context
+	* README.md
+	* ChangeLog
+	* Authen/TOTP/WebApp.pm
+	- add accessor for secrets_manager
+	- updated pod
+	(new)
+	- instantiate secrets manager class
+	(init_secret_repo): removed
+	(find_secret): call find_secret() method of instantiates secrets manager
+	(save_secret): likewise
+	* Authen/TOTP/QRCode.pm
+	- added pod
+	* README.md: updated
+	* Authen/TOTP/Webapp.pod: updated
+
 Fri May  5 14:31:40 2023  Rob Lauer  <rlauer6@comcast.net>
 
 	[documentation]:

@@ -11,20 +11,21 @@ use MIME::Base64 qw(encode_base64);
 use Readonly;
 
 # booleans
-
 Readonly our $TRUE  => 1;
 Readonly our $FALSE => 0;
 
 # chars
 Readonly our $EMPTY => q{};
 
-Readonly our $OTPAUTH_URI => 'otpauth://totp/%s:%s?secret=%s&issuer=%s';
-
+# png specs
 Readonly our $DEFAULT_QRCODE_SIZE    => 8;
 Readonly our $DEFAULT_QRCODE_MARGIN  => 1;
 Readonly our $DEFAULT_QRCODE_VERSION => 0;
 Readonly our $DEFAULT_QRCODE_LEVEL   => 1;
-Readonly our $IMAGE_TAG => '<img src="data:image/png;base64, %s">';
+
+# misc
+Readonly our $OTPAUTH_URI => 'otpauth://totp/%s:%s?secret=%s&issuer=%s';
+Readonly our $IMAGE_TAG   => '<img src="data:image/png;base64, %s">';
 
 use parent qw(Exporter Class::Accessor::Fast);
 
@@ -162,3 +163,27 @@ sub main {
 }
 
 1;
+
+## no critic (RequirePodSections)
+
+__END__
+
+=pod
+
+=head1 NAME
+
+Authen::TOTP::QRCode - class to generate QR codes for 2FA secrets
+
+=head1 SYNOPSIS
+
+=head1 DESCRIPTION
+
+=head1 METHODS AND SUBROUTINES
+
+=head1 SEE ALSO
+
+=head1 AUTHOR
+
+Rob Lauer - <rlauer6@comcast.net>
+
+=cut

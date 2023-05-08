@@ -3,7 +3,7 @@ package Authen::TOTP::WebApp;
 use strict;
 use warnings;
 
-use lib '.';
+use lib q{.};
 
 use Authen::OATH;
 use Cwd;
@@ -19,6 +19,8 @@ Readonly our $TRUE  => 1;
 Readonly our $FALSE => 0;
 Readonly our $EMPTY => qw{};
 
+Readonly our $DEFAULT_SECRETS_MANAGER => 'FileCache';
+
 use parent qw(Authen::TOTP::QRCode);
 
 __PACKAGE__->follow_best_practice;
@@ -30,6 +32,7 @@ __PACKAGE__->mk_accessors(
     config_path
     include_path
     secret
+    secrets_manager
     username
     verified
   )
@@ -57,7 +60,27 @@ sub new {
 
   $self->set_issuer( $self->get_config->{app}->{issuer} );
 
-  $self->init_secret_repo();
+  my $secrets_manager = $self->get_config->{app}->{secrets_manager}
+    || $DEFAULT_SECRETS_MANAGER;
+
+  # short hand
+  if ( $secrets_manager !~ /^Authen/xsm ) {
+    $secrets_manager = 'Authen::TOTP::SecretsManager::' . $secrets_manager;
+  }
+
+  my $class_path = $secrets_manager;
+
+  if ( $class_path =~ /::/xsm ) {
+    $class_path =~ s/::/\//gxsm;
+    $class_path = "$class_path.pm";
+  }
+  elsif ( $class_path =~ /[.]pm$/xsm ) {
+    die 'classes should be specified using the package name';
+  }
+
+  require $class_path;
+
+  $self->set_secrets_manager( $secrets_manager->new($self) );
 
   if ( $self->get_username && $self->get_access_code ) {
     $self->set_verified( $self->verify_totp() );
@@ -67,31 +90,11 @@ sub new {
 }
 
 ########################################################################
-sub init_secret_repo {
-########################################################################
-  my ($self) = @_;
-
-  require Cache::FileCache;
-
-  my $cache = Cache::FileCache->new( { namespace => $self->get_appname } );
-
-  $self->mk_accessors('cache');
-
-  $self->set_cache($cache);
-
-  return $self;
-}
-
-########################################################################
 sub find_secret {
 ########################################################################
   my ( $self, $username ) = @_;
 
-  $username //= $self->get_username;
-
-  my $cache = $self->get_cache;
-
-  return $cache->get($username);
+  return $self->get_secrets_manager->find_secret($username);
 }
 
 ########################################################################
@@ -99,7 +102,7 @@ sub save_secret {
 ########################################################################
   my ( $self, $key, $secret ) = @_;
 
-  return $self->get_cache->set( $key, $secret );
+  return $self->get_secrets_manager->save_secret( $key, $secret );
 }
 
 ########################################################################
@@ -343,7 +346,7 @@ __END__
 
 =head1 NAME
 
-Authen::TOTP::WebApp - Method to support two-factor authentication
+Authen::TOTP::WebApp - Methods to support two-factor authentication
 
 =head1 SYNOPSIS
 
@@ -384,33 +387,54 @@ two-factor authentication for your web applications. This class will:
 
 =over 5
 
-=item * create a secret that can be used with L<Authen::OATH> to return a time-base one-time password (TOTP)
+=item * create a secret that can be used with L<Authen::OATH> to
+return a time-based one-time password (TOTP)
 
-=item * create a QR code image of that can be scanned using mobil apps
+=item * create a QR code PNG image of the secret that can be scanned
+using mobil apps
 
 =item * store and retrieve keys
 
-=item * returning an HTML form for creating a secret
+=item * return an HTML form for creating a secret
 
 =back
 
-The module can be used as part of a web application or stand-alone.
+The module can be used as part of a web application or
+stand-alone. This implementation creates a form from a
+Template::Toolkit template embedded in the C<DATA> section of the
+CGI. The form is implemented using Bootstrap in order support both
+desktop and mobile usage. You can provide your own from that will be
+delivered by the CGI (See L</render_qrcode_form>).
+
+The module creates a secret associated with a username.  The secret is
+then stored so that it can be used later when comparing the password
+entered by the user with a password generated using that key by
+calling C<Authen::OATH>.
+
+You specify a secrets manager class that should implement a
+constructor which will be passed an instance of this class and two
+other methods described below (L</find_secret>, L</save_secret>). The
+default implementation provided with this project
+(L<Authen::TOTP::SecretsManager::FileCache) is used if no secrets
+manager class is provided in the configuration.
+
+The project also includes an example secrets manager using AWS Secrets
+Manager (L<Authen::TOTP::SecretsManager::AWSSecretsManager>).  .
 
 =head1 CONFIGURATION FILE
 
-The configuration file included with the project is specific to the
-Bootstrap implementation of the key creation and verification
-forms. You can more or less put anything you want in this file.  The
-CGI will look for F<totp.json> in the path pointed to by the
-environment variable C<CONFIG_PATH>.
+The configuration file included with the project has some values that
+are specific to the Bootstrap implementation of the key creation and
+verification forms. You can however, put anything you want in the
+configuration file. The CGI will look for F<totp.json> in the path
+pointed to by the environment variable C<CONFIG_PATH>.
 
 The only section required by the application is the C<app> section and
-the only value really required is C<issue>. If that is not found, then
-the issuer will be set "UNKNOWN".
+the only value I<really (sort of)> required is C<issuer>. If that is
+not found, then the issuer will be set "UNKNOWN".
 
-If you are building your own forms, create your own version of
-F<totp.json> to suit your needs.
-
+If you are building your own forms or implementing your own secrets
+manager, create your own version of F<totp.json> to suit your needs.
 
  {
    "app" : {
@@ -427,7 +451,8 @@ F<totp.json> to suit your needs.
          "id" : "qrcode-form"
        }
      },
-     "instructions" : "instructions.txt"
+     "instructions" : "instructions.txt",
+     "secrets_manager" : ""
    },
    "jquery" : {
      "javascript" : {
@@ -463,7 +488,8 @@ default: $ENV{CONFIG_PATH}, cwd
 
 =item  include_path
 
-Path where C<Template> can find files that are included using the C<[% INCLUDE %]> tag.
+Path where C<Template> can find files that are included using the C<[%
+INCLUDE %]> tag.
 
 =item  appname
 
@@ -534,15 +560,96 @@ The access code to match is calculated using L<Authen::OATH>.
 =head1 OVERRIDABLE METHODS
 
 The reference implementation that runs in the Docker container uses
-C<Cache::FileCache> to store secrets locally. In a production
-environment, you'll want to use your own secrets repository.
+C<Cache::FileCache> to store secrets locally by implementing a secrets
+manager class named C<Authen::TOTP::SecretsManager::FileCache>. In a
+production environment, you'll probably want to use your own secrets
+repository.
+
+You can provide your own implementation of a secrets manager or you
+can sub-class this class and override C<find_secret> and
+C<save_secret>.
 
 =over 5
 
-=item C<init_secret_repo>
+=item Implement Your own Secrets Manager
 
-This method will be called when class is instantiated. You should do
-what you need to do in order to use your repository.
+Using this method provide three methods, a constructor (C<new>) and
+the two methods for finding and saving secrets.
+
+The constructor will be passed an instance of this class which
+contains a getter method for retrieving the configuration object. You
+can add a section for your secrets manager. Then specify the name of
+the class in the C<secrets_manager> config variable.
+
+ package Authen::TOTP::SecretsManager:File;
+
+ sub new {
+   my ($class, $authen_totp_webapp) = @_;
+
+   my $self = { filename => $authen_totp_webapp->get_config->{filename} };
+
+   return bless $self, $class;
+ }
+    
+ sub find_secret {
+   ...
+ }
+
+ sub save_secret {
+   ...
+ }
+
+ 1;
+
+=item Sub-Classing C<Authen::TOTP::WebApp>
+
+Instead of implementing a separate secrets manager class you can
+sub-class C<Authen::TOTP::WebApp> and provide the two required methods
+(C<find_secret>, C<save_secret>).
+
+ package Authen::TOTP::MyWebApp;
+
+ use parent qw(Authen::TOTP::MyWebApp);
+
+ sub find_secret {
+   my ($self, $secret_id) = @_;
+   ...
+   return $secret_value;
+ }
+
+ sub save_secret {
+   my ($self, $secret_id, $secret_string) = @_;
+   ...
+   return $self; # return value is not used by callers
+ }
+
+ 1;
+
+If you need to initialize anything or store additional data, you'll
+need to do that when your methods are called. They may be called in
+any order.
+
+ my $my_config;
+
+ sub find_secret {
+   if (!$my_config) {
+     $my_config = init_my_webapp();
+   }
+ }
+
+ sub save_secret {
+   if (!$my_config) {
+     $my_config = init_my_webapp();
+   }
+ }
+
+ sub init_my_webapp {
+   ...
+ }
+
+=back
+
+=over 5
 
 =item C<save_secret>
 
@@ -551,15 +658,15 @@ and generating a secret. It is passed the C<username> and the C<secret>.
 
 =item C<find_secret>
 
-This method will be called when you call C<verify_totp> to verify as
+This method will be called when you call C<verify_totp> to verify an
 access code. You should return the secret or undef if the username is found
 
 =item C<gen_secret>
 
 The reference implementation uses a simple algorithm to create a 32
-character key composed of the letters A-Z and the numbers 2-7. You can
+character secret key composed of the letters A-Z and the numbers 2-7. You can
 replace this method to return your own version of a secret. You may
-want to check your a secret before issuing to make sure it is unique.
+want to check your secret before issuing to make sure it is unique.
 
 =back
 
